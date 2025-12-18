@@ -12,14 +12,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      // reset activity select options
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
-        const spotsLeft = details.max_participants - details.participants.length;
+        const spotsLeft = details.max_participants - (details.participants?.length || 0);
 
+        // Main info
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
@@ -27,6 +30,52 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         `;
 
+        // Participants section
+        const participantsSection = document.createElement("div");
+        participantsSection.className = "participants-section";
+        const participantsHeading = document.createElement("h5");
+        participantsHeading.textContent = "Participants";
+        participantsSection.appendChild(participantsHeading);
+
+        const ul = document.createElement("ul");
+        ul.className = "participants-list";
+
+        const participants = details.participants || [];
+
+        if (participants.length > 0) {
+          participants.forEach((p) => {
+            const li = document.createElement("li");
+
+            const badge = document.createElement("span");
+            badge.className = "participant-badge";
+            // derive simple initials from the email or name
+            const namePart = String(p).split("@")[0].replace(/[\W_]+/g, " ");
+            const initials = namePart
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map(s => s[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase();
+            badge.textContent = initials || "?";
+
+            const text = document.createElement("span");
+            text.textContent = p;
+
+            li.appendChild(badge);
+            li.appendChild(text);
+            ul.appendChild(li);
+          });
+        } else {
+          const li = document.createElement("li");
+          li.className = "no-participants";
+          li.textContent = "No participants yet";
+          ul.appendChild(li);
+        }
+
+        participantsSection.appendChild(ul);
+        activityCard.appendChild(participantsSection);
         activitiesList.appendChild(activityCard);
 
         // Add option to select dropdown
