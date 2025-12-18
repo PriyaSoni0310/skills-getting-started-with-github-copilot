@@ -46,6 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
           participants.forEach((p) => {
             const li = document.createElement("li");
 
+            const participantInfo = document.createElement("div");
+            participantInfo.style.display = "flex";
+            participantInfo.style.alignItems = "center";
+            participantInfo.style.gap = "10px";
+
             const badge = document.createElement("span");
             badge.className = "participant-badge";
             // derive simple initials from the email or name
@@ -63,8 +68,38 @@ document.addEventListener("DOMContentLoaded", () => {
             const text = document.createElement("span");
             text.textContent = p;
 
-            li.appendChild(badge);
-            li.appendChild(text);
+            participantInfo.appendChild(badge);
+            participantInfo.appendChild(text);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-participant";
+            deleteBtn.textContent = "×";
+            deleteBtn.title = "Unregister participant";
+
+            deleteBtn.addEventListener("click", async () => {
+              try {
+                const response = await fetch(
+                  `/activities/${encodeURIComponent(name)}/unregister?email=${encodeURIComponent(p)}`,
+                  {
+                    method: "POST",
+                  }
+                );
+
+                if (response.ok) {
+                  // Refresh activities
+                  fetchActivities();
+                } else {
+                  const result = await response.json();
+                  alert(result.detail || "Failed to unregister");
+                }
+              } catch (error) {
+                alert("Failed to unregister. Please try again.");
+                console.error("Error unregistering:", error);
+              }
+            });
+
+            li.appendChild(participantInfo);
+            li.appendChild(deleteBtn);
             ul.appendChild(li);
           });
         } else {
@@ -111,6 +146,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities to show the new participant
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
